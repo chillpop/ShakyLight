@@ -6,12 +6,22 @@
 #define PIXEL_PIN 0
 #define ACCEL_PIN 1
 
+#define RED_HUE 85
+#define GREEN_HUE 0
+#define BLUE_HUE 170
+
 //average the accelerometer over this many readings to reduce noise
 #define ACCEL_SAMPLES 10
+
 #define NUM_PIXELS 8
-//using an 8 pixels board for space, but not all of the pixels for power savings
 #define NUM_ACTIVE_PIXELS 3
+//using an 8 pixels board for space, but not all of the pixels for power savings
 const int activePixels[] = {0, 3, 7};
+
+//uncomment these next two lines if the LEDs are 3 contiguous pixels 
+//#define NUM_PIXELS 3
+//const int activePixels[] = {0, 1, 2};
+
 
 #define SHAKE_THRESHOLD 256
 #define SHAKE_COUNT_THRESHOLD 3
@@ -19,7 +29,7 @@ const int activePixels[] = {0, 3, 7};
 int shakeCount = 0;
 
 //start with red
-int currentHue = 85;
+int currentHue = RED_HUE;
 #define HUE_INCREMENT 1
 
 #define BRIGHTNESS_INCREMENT 10
@@ -34,6 +44,8 @@ Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM_PIXELS, PIXEL_PIN, NEO_GRB + NE
 unsigned long upsideDownStartTime = 0;
 #define UPSIDE_DOWN_TIME_THRESHOLD 250
 //if we're upside down for more than this time, do something
+#define UPSIDE_DOWN_MODE_CHANGE_TIME_THRESHOLD 2000
+//if we're upside down for more than this time, change modes
 
 void setup() {
   pixels.begin();
@@ -41,6 +53,22 @@ void setup() {
   pixels.setBrightness(currentBrightness);
   pixels.show();
 }
+
+/* test firefly effect
+void firefly() {
+  pixels.setBrightness(255);
+  int pixel = random(0, NUM_PIXELS);
+  for (int i = 0; i < NUM_PIXELS; i++) {
+    uint32_t color = 0;
+    if (i == pixel) {
+      color = Wheel(BLUE_HUE);   
+    }   
+    pixels.setPixelColor(i, color);
+  }
+  pixels.show();
+  delay(500);
+}
+*/
 
 void loop() {
   int accel = readAccelerometer();
@@ -67,6 +95,7 @@ void loop() {
   currentBrightness = constrain(currentBrightness, MIN_BRIGHTNESS, MAX_BRIGHTNESS);
 
   if (accel < 0) {
+    //we're upside down
     unsigned long now = millis();
     if (upsideDownStartTime == 0) {
       upsideDownStartTime = now;
